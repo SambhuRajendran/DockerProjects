@@ -1,0 +1,59 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('docker-hub-credentials') // Replace with your Jenkins credentials ID
+        IMAGE_NAME = 'rsambhu/nodeapp' // Replace with your image name
+    }
+
+    stages {
+        stage('Clone Repository') {
+             steps {
+                // Clone your Git repository
+                git url: 'https://github.com/SambhuRajendran/DockerProjects.git', branch: 'main'
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    // Building Docker image from Dockerfile in nodeApp folder
+                    docker.build("${IMAGE_NAME}:${env.BUILD_NUMBER}", './nodeApp')
+                }
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker.build("${IMAGE_NAME}:${env.BUILD_NUMBER}")
+                }
+            }
+        }
+
+        stage('Login to Docker Hub') {
+            steps {
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', "${DOCKERHUB_CREDENTIALS}") {
+                        // This step will log in to Docker Hub
+                    }
+                }
+            }
+        }
+
+        stage('Push Image to Docker Hub') {
+            steps {
+                script {
+                    docker.image("${IMAGE_NAME}:${env.BUILD_NUMBER}").push()
+                }
+            }
+        }
+
+        stage('Clean Up') {
+            steps {
+                script {
+                    // This step is optional, to clean up the built image from the Jenkins agent
+                    sh "docker rmi ${IMAGE_NAME}:${env.BUILD_NUMBER}"
+                }
+            }
+        }
+    }
+}
